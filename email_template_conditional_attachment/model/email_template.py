@@ -3,7 +3,7 @@
 #
 #    OpenERP, Open Source Management Solution
 #    This module copyright (C) 2014 Therp BV (<http://therp.nl>).
-#            
+#
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
 #    published by the Free Software Foundation, either version 3 of the
@@ -48,4 +48,3 @@ class EmailTemplate(orm.Model):
                     res['attachment_ids'].append(
                         attachment.attachment_id.id)
         return res
-            

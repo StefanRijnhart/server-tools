@@ -21,8 +21,9 @@
 {
     'name': 'Conditional attachments on email templates',
     'version': '0.1',
-    'author': 'Therp BV',
+    'author': 'Therp BV,Odoo Community Assocation (OCA)',
     'category': 'Email',
+    'license': 'AGPL-3',
     'website': 'http://therp.nl',
     'depends': [
         'email_template',
