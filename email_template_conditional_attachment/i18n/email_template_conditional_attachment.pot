@@ -1,0 +1,52 @@
+# Translation of OpenERP Server.
+# This file contains the translation of the following modules:
+# 	* email_template_conditional_attachment
+#
+msgid ""
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: field:ir.attachment,conditional_attachment_ids:0
+msgid "Conditionally attach to email templates"
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: field:email.template.conditional.attachment,domain:0
+msgid "Domain"
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: field:email.template.conditional.attachment,template_id:0
+msgid "Email template"
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: model:ir.model,name:email_template_conditional_attachment.model_email_template
+msgid "Email Templates"
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: model:ir.model,name:email_template_conditional_attachment.model_email_template_conditional_attachment
+msgid "email.template.conditional.attachment"
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: model:ir.model,name:email_template_conditional_attachment.model_ir_attachment
+msgid "ir.attachment"
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: field:email.template.conditional.attachment,attachment_id:0
+msgid "Attachment"
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: view:email.template:0 field:email.template,conditional_attachment_ids:0
+#: view:ir.attachment:0
+msgid "Conditional attachments"
+msgstr ""
+
+#. module: email_template_conditional_attachment
+#: view:ir.attachment:0
+msgid "Email templates to conditionally attach to"
+msgstr ""
