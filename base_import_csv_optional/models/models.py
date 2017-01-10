@@ -34,6 +34,7 @@ def load_import_optional(self, fields=None, data=None):
         res = {'ids': None, 'messages': messages}
     return res
 
+
 # Monkey patch function
 # A Because BaseModel _name = None
 BaseModel.load = load_import_optional

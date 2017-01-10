@@ -21,7 +21,7 @@ odoo.define('web.ListImport', function (require) {
                     var import_enabled = result;
                     self.options.import_enabled = import_enabled;
 
-                    if (import_enabled == false) {
+                    if (import_enabled === false) {
                         if (self.$buttons) {
                             self.$buttons.find('.o_button_import').remove();
                         }
