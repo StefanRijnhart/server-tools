@@ -19,7 +19,7 @@
         'base_import',
     ],
     'data': [
-        'security/base_import_csv_optional_security.xml',
+        'security/base_import_security_group_security.xml',
         'views/base_import.xml',
     ],
     'installable': True,

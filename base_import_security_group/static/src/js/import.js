@@ -16,7 +16,7 @@ odoo.define('web.ListImport', function (require) {
             var Users = new Model('res.users');
 
             var result = this._super.apply(this, arguments);
-            Users.call('has_group', ['base_import_csv_optional.group_import_csv'])
+            Users.call('has_group', ['base_import_security_group.group_import_csv'])
                 .then(function (result) {
                     var import_enabled = result;
                     self.options.import_enabled = import_enabled;
