@@ -20,7 +20,8 @@ def load_import_optional(self, fields=None, data=None):
     current_user = self.env['res.users'].browse(self.env.uid)
     allowed_group = 'base_import_security_group.group_import_csv'
     allowed_group_id = self.env.ref(
-        'base_import_security_group.group_import_csv', raise_if_not_found=False)
+        'base_import_security_group.group_import_csv',
+        raise_if_not_found=False)
     if not allowed_group_id or \
             (current_user and current_user.has_group(allowed_group)):
         res = base_load(self, fields=fields, data=data)
