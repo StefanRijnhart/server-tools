@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-# © 2015 Anubía, soluciones en la nube,SL (http://www.anubia.es)
-# © 2017 ONESTEiN BV (http://www.onestein.eu)
+# Copyright 2015 Anubía, soluciones en la nube,SL (http://www.anubia.es)
+# Copyright 2017 Onestein (http://www.onestein.eu)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
-from odoo import api, models
 import logging
+
+from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
@@ -18,13 +19,13 @@ class Base(models.AbstractModel):
         if current user belongs to the group allowed for CSV data import.
         An exception is raised otherwise, and also log the import attempt.
         '''
-        current_user = self.env['res.users'].browse(self.env.uid)
+        current_user = self.env.user
         allowed_group = 'base_import_security_group.group_import_csv'
         allowed_group_id = self.env.ref(
-            'base_import_security_group.group_import_csv',
-            raise_if_not_found=False)
-        if not allowed_group_id or \
-                (current_user and current_user.has_group(allowed_group)):
+            allowed_group,
+            raise_if_not_found=False
+        )
+        if not allowed_group_id or current_user.has_group(allowed_group):
             res = super(Base, self).load(fields=fields, data=data)
         else:
             msg = ('User (ID: %s) is not allowed to import data '

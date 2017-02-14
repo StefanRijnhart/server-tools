@@ -2,9 +2,6 @@ odoo.define('web.ListImport', function (require) {
     "use strict";
     var core = require('web.core');
     var ListView = require('web.ListView');
-    var _t = core._t;
-    var _lt = core._lt;
-    var QWeb = core.qweb;
     var Model = require('web.Model');
 
     ListView.prototype.defaults.import_enabled = false;
