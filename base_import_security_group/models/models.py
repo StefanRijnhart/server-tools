@@ -30,7 +30,7 @@ class Base(models.AbstractModel):
         else:
             msg = ('User (ID: %s) is not allowed to import data '
                    'in model %s.') % (self.env.uid, self._name)
-            _logger.error(msg)
+            _logger.info(msg)
             messages = []
             info = {}
             messages.append(
