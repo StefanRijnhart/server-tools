@@ -8,20 +8,22 @@ _logger = logging.getLogger(__name__)
 try:
     from fs import osfs
 except ImportError:
+    osfs = None
     _logger.debug('Cannot `import fs`.')
 
 
-class FileStoreTask(osfs.OSFS):
+if osfs:
+    class FileStoreTask(osfs.OSFS):
 
-    _key = 'filestore'
-    _name = 'File Store'
-    _default_port = None
-    _hide_login = True
-    _hide_password = True
-    _hide_port = True
+        _key = 'filestore'
+        _name = 'File Store'
+        _default_port = None
+        _hide_login = True
+        _hide_password = True
+        _hide_port = True
 
-    @staticmethod
-    def connect(location):
-        rootpath = location.filestore_rootpath or '/'
-        conn = FileStoreTask(rootpath)
-        return conn
+        @staticmethod
+        def connect(location):
+            rootpath = location.filestore_rootpath or '/'
+            conn = FileStoreTask(rootpath)
+            return conn

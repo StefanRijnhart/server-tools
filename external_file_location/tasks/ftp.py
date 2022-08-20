@@ -9,22 +9,24 @@ try:
     from fs import ftpfs
 except ImportError:
     _logger.debug('Cannot `import fs`.')
+    ftpfs = None
 
 
-class FtpTask(ftpfs.FTPFS):
+if ftpfs:
+    class FtpTask(ftpfs.FTPFS):
 
-    _key = 'sftp'
-    _name = 'SFTP'
-    _synchronize_type = None
-    _default_port = 22
-    _hide_login = False
-    _hide_password = False
-    _hide_port = False
+        _key = 'sftp'
+        _name = 'SFTP'
+        _synchronize_type = None
+        _default_port = 22
+        _hide_login = False
+        _hide_password = False
+        _hide_port = False
 
-    @staticmethod
-    def connect(location):
-        conn = FtpTask(location.address,
-                       location.login,
-                       location.password,
-                       location.port)
-        return conn
+        @staticmethod
+        def connect(location):
+            conn = FtpTask(location.address,
+                           location.login,
+                           location.password,
+                           location.port)
+            return conn
