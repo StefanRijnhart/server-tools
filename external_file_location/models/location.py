@@ -3,9 +3,12 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
 from openerp import models, fields, api
-from ..tasks.filestore import FileStoreTask
-from ..tasks.ftp import FtpTask
-from ..tasks.sftp import SftpTask
+try:
+    from ..tasks.filestore import FileStoreTask
+    from ..tasks.ftp import FtpTask
+    from ..tasks.sftp import SftpTask
+except ImportError:
+    pass
 
 
 class Location(models.Model):
