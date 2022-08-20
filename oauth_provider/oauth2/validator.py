@@ -13,6 +13,7 @@ _logger = logging.getLogger(__name__)
 try:
     from oauthlib.oauth2 import RequestValidator
 except ImportError:
+    RequestValidator = object
     _logger.debug('Cannot `import oauthlib`.')
 
 

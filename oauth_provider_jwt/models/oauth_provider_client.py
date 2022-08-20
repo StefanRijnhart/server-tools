@@ -28,6 +28,8 @@ try:
         load_pem_private_key
     from cryptography.hazmat.primitives.asymmetric import rsa, ec
 except ImportError:
+    EllipticCurvePrivateKey = None
+    RSAPrivateKey = None
     _logger.debug('Cannot `import cryptography`.')
 
 
