@@ -23,9 +23,7 @@
     ],
     "assets": {
         "web.assets_backend": [
-            "base_changeset/static/src/js/backend.js",
-            "base_changeset/static/src/scss/backend.scss",
-            "base_changeset/static/src/xml/backend.xml",
+            "base_changeset/static/src/components/*/**",
         ],
     },
     "demo": ["demo/changeset_field_rule.xml"],
