@@ -381,7 +381,13 @@ class RecordChangesetChange(models.Model):
         return change, pop_value
 
     @api.model
-    def get_fields_changeset_changes(self, model, res_id):
+    def get_changeset_changes_by_field(self, model, res_id):
+        """Return changes grouped by field.
+
+        :returns: dictionary with field names as keys and lists of dictionaries
+        describing changes as keys.
+        :rtype: dict
+        """
         fields = [
             "new_value_display",
             "origin_value_display",
@@ -394,7 +400,12 @@ class RecordChangesetChange(models.Model):
             ("changeset_id.res_id", "=", res_id),
             ("state", "in", states),
         ]
-        return self.search_read(domain, fields)
+        return {
+            field_name: list(changes)
+            for (field_name, changes) in groupby(
+                self.search_read(domain, fields), lambda vals: vals["field_name"]
+            )
+        }
 
     @api.depends_context("user")
     def _compute_user_can_validate_changeset(self):

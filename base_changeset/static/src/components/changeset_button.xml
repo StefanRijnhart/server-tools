@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="base_changeset.ChangesetButton" owl="1">
+        <a
+            class="o_ChangesetButtonView badge rounded-pill text-bg-warning mx-3 align-self-center"
+            role="button"
+            t-if="props.record.changesetChanges[props.fieldName]"
+            t-on-click="onClick"
+            t-ref="button"
+            t-esc="props.record.changesetChanges[props.fieldName].length"
+        />
+    </t>
+</templates>

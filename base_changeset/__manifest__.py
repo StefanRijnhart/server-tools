@@ -23,7 +23,10 @@
     ],
     "assets": {
         "web.assets_backend": [
-            "base_changeset/static/src/components/*/**",
+            "base_changeset/static/src/components/form_label.*",
+            "base_changeset/static/src/components/changeset_button.*",
+            "base_changeset/static/src/components/record.esm.js",
+            # "base_changeset/static/src/components/*/**",
         ],
     },
     "demo": ["demo/changeset_field_rule.xml"],

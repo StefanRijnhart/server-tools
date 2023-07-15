@@ -1,10 +1,11 @@
 /** @odoo-module **/
+const {useEffect} = owl;
 
 import {FormController} from "@web/views/form/form_controller";
 import {FormRenderer} from "@web/views/form/form_renderer";
 import {Model} from "@web/views/model";
-import {patch} from "@web/core/utils/patch";
 import {Popover} from "@web/core/popover/popover";
+import {patch} from "@web/core/utils/patch";
 import {qweb} from "web.core";
 
 patch(Model.prototype, "base_changeset.Model", {
@@ -50,9 +51,9 @@ patch(Model.prototype, "base_changeset.Model", {
 
 patch(FormController.prototype, "base_changeset.FormController", {
     setup() {
-        var self = this;
-        this._super.apply(this, arguments);
-        this._updateChangeset.bind(self);
+        const res = this._super();
+        useEffect(() => this._updateChangeset());
+        return res;
     },
 
     // eslint-disable-next-line no-unused-vars
