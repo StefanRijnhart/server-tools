@@ -33,17 +33,18 @@ patch(FormCompiler.prototype, "base_changeset.FormCompiler", {
                     */
                     const fieldName = child.getAttribute("name");
                     const button = createElement("BaseChangesetButton", {
-                        record: `props.record`,
                         fieldName: fieldName,
+                        id: "'chsetbtn_`fieldName`'",
+                        record: `props.record`,
                     });
                     button.setAttribute(
                         "Component",
-                        "constructor.components.FormLabel"
+                        "constructor.components.BaseChangesetButton"
                     );
-                    button.setAttribute("subType", "'item_component'");
+                    const button_node = button;
+                    // FIXME: copyAttributes but without double quote syntax error '{} mismatch'
+                    // copyAttributes(child, button_node);
                     // Store the button in a registry so we can remove it if needed.
-                    const button_node = this.compileNode(button, params);
-                    copyAttributes(child, button_node);
                     this.insertedChangesetButtons[fieldName] = button;
                     console.log("Attach to field: " + fieldName);
                     child.after(button_node);
