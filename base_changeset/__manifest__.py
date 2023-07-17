@@ -26,6 +26,7 @@
             "base_changeset/static/src/components/form_label.*",
             "base_changeset/static/src/components/changeset_button.*",
             "base_changeset/static/src/components/record.esm.js",
+            "base_changeset/static/src/components/form_compiler.esm.js",
             # "base_changeset/static/src/components/*/**",
         ],
     },
