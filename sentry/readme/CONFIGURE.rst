@@ -55,6 +55,17 @@ send_default_pii, http_proxy, https_proxy, request_bodies, debug,
 attach_stacktrace, ca_certs, propagate_traces, traces_sample_rate,
 auto_enabling_integrations``.
 
+If you are on Odoo.sh, or you control the environment variables on your Odoo
+nodes, you can distinguish between settings for different environments by
+inserting the environment in the configuration key. For example::
+
+    sentry_production_enabled = True
+    sentry_staging_enabled = False
+
+The value that is inserted in the key is provided by the *ODOO_STAGE* environment
+variable which is set on Odoo.sh to either `production` or `staging` (but you can
+use any value). A key without environment part can be used as a fallback.
+
 Example Odoo configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -71,6 +82,7 @@ Below is an example of Odoo configuration file with *Odoo Sentry* options::
         odoo.exceptions.ValidationError,odoo.exceptions.Warning,
         odoo.exceptions.except_orm
     sentry_include_context = true
-    sentry_environment = production
+    sentry_environment = test
+    sentry_production_environment = production
     sentry_release = 1.3.2
     sentry_odoo_dir = /home/odoo/odoo/
