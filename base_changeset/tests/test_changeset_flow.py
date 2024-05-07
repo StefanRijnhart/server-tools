@@ -4,6 +4,8 @@
 
 from datetime import datetime, timedelta
 
+from lxml import etree
+
 from odoo import fields
 from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase
@@ -54,6 +56,26 @@ class TestChangesetFlow(ChangesetTestCommon, TransactionCase):
         )
         # Add context for this test for compatibility with other modules' tests
         cls.partner = cls.partner.with_context(test_record_changeset=True)
+
+    def test_get_view(self):
+        """For privileged users, the smart button is present on the form"""
+        view = self.env.ref("base.view_partner_form")
+
+        def get_nodes(user):
+            arch = etree.XML(
+                self.env["res.partner"]
+                .with_user(user)
+                .get_view(view_id=view.id)["arch"]
+            )
+            return len(
+                arch.xpath(
+                    "//div[@name='button_box']"
+                    "/button[@name='action_record_changeset_change_view']"
+                )
+            )
+
+        self.assertTrue(get_nodes(self.env.ref("base.user_admin")))
+        self.assertFalse(get_nodes(self.env.ref("base.user_demo")))
 
     def test_new_changeset(self):
         """Add a new changeset on a partner
