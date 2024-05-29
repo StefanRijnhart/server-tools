@@ -10,7 +10,7 @@ from sentry_sdk.transport import HttpTransport
 
 from odoo import exceptions
 from odoo.tests import TransactionCase
-from odoo.tools import config
+from odoo.tools import config, mute_logger
 
 from ..const import to_int_if_defined
 from ..hooks import initialize_sentry
@@ -92,12 +92,7 @@ class TestClientSetup(TransactionCase):
 
         # Setup our own logger so we don't flood stderr with error logs
         self.logger = logging.getLogger("odoo.sentry.test.logger")
-        # Do not mutate list while iterating it
-        handlers = [handler for handler in self.logger.handlers]
-        for handler in handlers:
-            self.logger.removeHandler(handler)
         self.logger.addHandler(NoopHandler())
-        self.logger.propagate = False
 
     def patch_config(self, options: dict):
         """
@@ -112,7 +107,16 @@ class TestClientSetup(TransactionCase):
         self.addCleanup(_config_patcher.stop)
 
     def log(self, level, msg, exc_info=None):
-        self.logger.log(level, msg, exc_info=exc_info)
+        """Remove the default handlers before logging to keep it quiet"""
+        root = logging.getLogger()
+        handlers = [handler for handler in root.handlers]
+        for handler in handlers:
+            root.removeHandler(handler)
+        try:
+            self.logger.log(level, msg, exc_info=exc_info)
+        finally:
+            for handler in handlers:
+                root.addHandler(handler)
 
     def assertEventCaptured(self, client, event_level, event_msg):
         self.assertTrue(
@@ -140,6 +144,13 @@ class TestClientSetup(TransactionCase):
         self.log(level, msg)
         level = "error"
         self.assertEventCaptured(self.client, level, msg)
+
+    def test_mute_logger(self):
+        level, msg = logging.WARNING, "Test event, can be ignored"
+        with mute_logger(__name__):
+            self.log(level, msg)
+        level = "warning"
+        self.assertEventNotCaptured(self.client, level, msg)
 
     def test_capture_event_exc(self):
         level, msg = logging.ERROR, "Test event, can be ignored exception"

@@ -53,6 +53,15 @@ def before_send(event, hint):
         if qualified_name in const.DEFAULT_IGNORED_EXCEPTIONS:
             return None
 
+        # Check if the logger is muted
+        try:
+            logger_name = hint["log_record"].name
+        except AttributeError:
+            logger_name = None
+
+        if logger_name and not logging.getLogger(logger_name).propagate:
+            return None
+
     if event.setdefault("tags", {})["include_context"]:
         cxtest = get_extra_context(odoo.http.request)
         info_request = ["tags", "user", "extra", "request"]
