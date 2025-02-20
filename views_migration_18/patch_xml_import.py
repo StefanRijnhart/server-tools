@@ -159,11 +159,11 @@ from odoo.osv.expression import (
     distribute_not,
     normalize_domain,
 )
-from odoo.tools import apply_inheritance_specs, locate_node
 
 # from odoo import tools
-from odoo.tools.misc import str2bool, unique
+from odoo.tools.misc import unique
 from odoo.tools.safe_eval import _BUILTINS
+from odoo.tools.template_inheritance import apply_inheritance_specs
 from odoo.tools.view_validation import (
     _get_expression_contextual_values,
     get_domain_value_names,
@@ -689,7 +689,8 @@ def convert_node_modifiers_inplace(root, env, model, view_type, ref):
             # use python field to convert view <field>
             if item.get("readonly"):
                 expr_to_attr(item, field=field)
-            elif field.states:
+            elif getattr(field, "states", None):
+                # 'states' is not a valid field attribute anymore in standard Odoo
                 readonly = bool(field.readonly)
                 fnames = [k for k, v in field.states.items() if v[0][1] != readonly]
                 if fnames:
@@ -1168,7 +1169,7 @@ def _modifier_to_domain_ast_domain(modifier_ast):
 
     domain = []
     for leaf in modifier_ast.elts:
-        if isinstance(leaf, ast.Str) and leaf.s in DOMAIN_OPERATORS:
+        if isinstance(leaf, ast.Constant) and leaf.s in DOMAIN_OPERATORS:
             # !, |, &
             domain.append(leaf.s)
         elif isinstance(leaf, ast.Constant):
@@ -1223,7 +1224,7 @@ def _modifier_to_domain_ast_leaf(
 
     # [('a', '=', 'b')]
     # 'b'
-    if isinstance(item_ast, ast.Str):
+    if isinstance(item_ast, ast.Constant):
         return item_ast.s
 
     # [('a', '=', 1)] if context.get('b') else []
