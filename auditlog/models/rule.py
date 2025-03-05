@@ -4,7 +4,7 @@
 import copy
 
 from odoo import Command, _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 FIELDS_BLACKLIST = [
     "id",
@@ -137,6 +137,15 @@ class AuditlogRule(models.Model):
         domain="[('model_id', '=', model_id)]",
         string="Fields to Exclude",
     )
+    fields_to_include_ids = fields.Many2many(
+        "ir.model.fields",
+        domain="[('model_id', '=', model_id)]",
+        string="Fields to Include",
+        states={"subscribed": [("readonly", True)]},
+        relation="auditlog_rule_fields_include_rel",
+        column1="rule_id",
+        column2="field_id",
+    )
 
     _sql_constraints = [
         (
@@ -148,6 +157,17 @@ class AuditlogRule(models.Model):
             ),
         )
     ]
+
+    @api.constrains("fields_to_exclude_ids", "fields_to_include_ids")
+    def _check_fields_exclude_include(self):
+        for rule in self:
+            if rule.fields_to_exclude_ids and rule.fields_to_include_ids:
+                raise ValidationError(
+                    _(
+                        "You can only set up 'Fields to Exclude' "
+                        "or 'Fields to Include', not both."
+                    )
+                )
 
     def _register_hook(self):
         """Get all rules and apply them to log method calls."""
@@ -511,7 +531,13 @@ class AuditlogRule(models.Model):
         model_model = self.env[res_model]
         model_id = self.pool._auditlog_model_cache[res_model]
         auditlog_rule = self.env["auditlog.rule"].search([("model_id", "=", model_id)])
+
         fields_to_exclude = auditlog_rule.fields_to_exclude_ids.mapped("name")
+        if auditlog_rule.fields_to_include_ids:
+            all_fields = list(model_model._fields.keys())
+            fields_to_include = auditlog_rule.fields_to_include_ids.mapped("name")
+            fields_to_exclude = list(set(all_fields) - set(fields_to_include))
+
         for res_id in res_ids:
             res = model_model.browse(res_id)
             vals = {

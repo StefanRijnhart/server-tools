@@ -52,7 +52,12 @@
                             <field
                                 name="fields_to_exclude_ids"
                                 widget="many2many_tags"
-                                readonly="state == 'subscribed'"
+                                readonly="state == 'subscribed' or fields_to_include_ids"
+                            />
+                            <field
+                                name="fields_to_include_ids"
+                                widget="many2many_tags"
+                                readonly="state == 'subscribed' or fields_to_exclude_ids"
                             />
                         </group>
                         <group colspan="1">
