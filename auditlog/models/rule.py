@@ -525,6 +525,7 @@ class AuditlogRule(models.Model):
             old_values = EMPTY_DICT
         if new_values is None:
             new_values = EMPTY_DICT
+
         log_model = self.env["auditlog.log"]
         http_request_model = self.env["auditlog.http.request"]
         http_session_model = self.env["auditlog.http.session"]

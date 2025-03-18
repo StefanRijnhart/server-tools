@@ -802,11 +802,13 @@ class AuditlogFast_excluded_fields(TransactionCase):
         )
 
         # get phone field id
+        field_names = ["phone", "phone_sanitized"]
         cls.fields_to_exclude_ids = (
             cls.env["ir.model.fields"]
-            .search([("model", "=", "res.partner"), ("name", "=", "phone")])
-            .id
+            .search([("model", "=", "res.partner"), ("name", "in", field_names)])
+            .ids
         )
+
         # creating auditlog.rule
         cls.auditlog_rule = (
             cls.env["auditlog.rule"]
@@ -826,10 +828,8 @@ class AuditlogFast_excluded_fields(TransactionCase):
         )
 
         # Updating phone in fields_to_exclude_ids
-        cls.auditlog_rule.fields_to_exclude_ids = [[4, cls.fields_to_exclude_ids]]
-
-        # Subscribe auditlog.rule
-        cls.auditlog_rule.subscribe()
+        for field_id in cls.fields_to_exclude_ids:
+            cls.auditlog_rule.fields_to_exclude_ids = [[4, field_id]]
 
         cls.auditlog_log = cls.env["auditlog.log"]
 
@@ -845,6 +845,9 @@ class AuditlogFast_excluded_fields(TransactionCase):
             )
         )
 
+        # Subscribe auditlog.rule
+        cls.auditlog_rule.subscribe()
+
     def test_01_AuditlogFast_field_exclude_write_log(self):
         # Checking fields_to_exclude_ids
         self.testpartner1.with_context(tracking_disable=True).write(
@@ -853,12 +856,12 @@ class AuditlogFast_excluded_fields(TransactionCase):
             }
         )
         # Checking log is created for testpartner1
-        self.assertFalse(
-            self.auditlog_log.search(
-                [
-                    ("model_id", "=", self.auditlog_rule.model_id.id),
-                    ("method", "=", "write"),
-                    ("res_id", "=", self.testpartner1.id),
-                ]
-            )
+        found_log = self.auditlog_log.search(
+            [
+                ("model_id", "=", self.auditlog_rule.model_id.id),
+                ("method", "=", "write"),
+                ("res_id", "=", self.testpartner1.id),
+            ]
         )
+
+        self.assertFalse(found_log)
