@@ -285,7 +285,15 @@ class AuditlogRule(models.Model):
             # their values exist in cache.
             new_values = {}
             fields_list = rule_model.get_auditlog_fields(self)
-            for new_record in new_records.sudo():
+
+            # Use a throwaway cache to retrieve the resulting record values, to
+            # prevent messing up the actual cache.
+            temporary_cache = api.Cache()
+            temporary_records = new_records.sudo()
+            original_cache = new_records.env.cache
+            temporary_records.env.cache = temporary_cache
+
+            for new_record in temporary_records:
                 new_values.setdefault(new_record.id, {})
                 for fname, field in new_record._fields.items():
                     if fname not in fields_list:
@@ -293,6 +301,8 @@ class AuditlogRule(models.Model):
                     new_values[new_record.id][fname] = field.convert_to_read(
                         new_record[fname], new_record
                     )
+            temporary_records.env.cache = original_cache
+
             if self.env.user in users_to_exclude:
                 return new_records
             rule_model.sudo().create_logs(
@@ -381,30 +391,33 @@ class AuditlogRule(models.Model):
             self = self.with_context(auditlog_disabled=True)
             rule_model = self.env["auditlog.rule"]
             fields_list = rule_model.get_auditlog_fields(self)
-            records_write = self.filtered(lambda r: not isinstance(r.id, models.NewId))
+            records_write = (
+                self.filtered(lambda r: not isinstance(r.id, models.NewId))
+                .sudo()
+                .with_context(prefetch_fields=False)
+            )
             if not records_write:
                 return write_full.origin(self, vals, **kwargs)
-            old_values = {
-                d["id"]: d
-                for d in records_write.sudo()
-                .with_context(prefetch_fields=False)
-                .read(fields_list)
-            }
-            # invalidate_recordset method must be called with existing fields
+
+            # Use a throwaway cache to retrieve the current record values,
+            # to prevent messing up the actual cache.
+            original_cache = records_write.env.cache
+            temporary_cache = api.Cache()
+            records_write.env.cache = temporary_cache
+            old_values = {d["id"]: d for d in records_write.read(fields_list)}
+
             if self._name == "res.users":
                 vals = self._remove_reified_groups(vals)
-            # Prevent the cache of modified fields from being poisoned by
-            # x2many items inaccessible to the current user.
-            self.invalidate_recordset(vals.keys())
             result = write_full.origin(self, vals, **kwargs)
-            new_values = {
-                d["id"]: d
-                for d in records_write.sudo()
-                .with_context(prefetch_fields=False)
-                .read(fields_list)
-            }
             if self.env.user in users_to_exclude:
                 return result
+
+            # Use yet another new cache to fetch the resulting values after the write.
+            temporary_cache2 = api.Cache()
+            records_write.env.cache = temporary_cache2
+            new_values = {d["id"]: d for d in records_write.read(fields_list)}
+            records_write.env.cache = original_cache
+
             rule_model.sudo().create_logs(
                 self.env.uid,
                 self._name,
