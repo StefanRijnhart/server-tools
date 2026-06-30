@@ -1,26 +1,20 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
-import threading
 
-_auditlog_local = threading.local()
-
-
-def get_guard():
-    if not hasattr(_auditlog_local, "guard"):
-        _auditlog_local.guard = set()
-    return _auditlog_local.guard
+GUARD_CONTEXT_KEY = "auditlog_guard"
 
 
-def add_guard(keys):
-    guard = get_guard()
+def add_guard(records, keys):
+    """Return a copy of ``records`` whose context tracks the given guard keys.
+
+    The guard is stored in the context so that it is propagated to the nested
+    operations triggered by the write (e.g. recomputation of stored computed
+    fields) and naturally discarded once the recordset goes out of scope.
+    """
+    guard = set(records.env.context.get(GUARD_CONTEXT_KEY, ()))
     guard.update(keys)
-    return guard
+    return records.with_context(**{GUARD_CONTEXT_KEY: frozenset(guard)})
 
 
-def has_conflict(keys):
-    guard = get_guard()
-    return bool(guard.intersection(keys))
-
-
-def remove_guard(keys):
-    guard = get_guard()
-    guard.difference_update(keys)
+def has_conflict(records, keys):
+    guard = records.env.context.get(GUARD_CONTEXT_KEY, ())
+    return bool(set(guard).intersection(keys))

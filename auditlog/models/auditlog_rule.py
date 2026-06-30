@@ -8,7 +8,7 @@ from odoo.exceptions import UserError
 from odoo.fields import Command
 from odoo.orm.identifiers import NewId
 
-from .auditlog_guard import add_guard, has_conflict, remove_guard
+from .auditlog_guard import add_guard, has_conflict
 
 FIELDS_BLACKLIST = [
     "id",
@@ -473,50 +473,47 @@ class AuditlogRule(models.Model):
         def write_full(self, vals, **kwargs):
             guard_keys = {(self._name, tuple(self.ids))}
 
-            if has_conflict(guard_keys):
+            if has_conflict(self, guard_keys):
                 return write_full.origin(self, vals, **kwargs)
 
-            add_guard(guard_keys)
-            try:
-                rule_model = self.env["auditlog.rule"]
-                fields_list = rule_model.get_auditlog_fields(self)
+            # Track the guard in the context so that it is propagated to the
+            # nested writes triggered while writing (e.g. recomputation of
+            # stored computed fields) and discarded once we are done.
+            self = add_guard(self, guard_keys)
+            rule_model = self.env["auditlog.rule"]
+            fields_list = rule_model.get_auditlog_fields(self)
 
-                records_write = (
-                    self.filtered(lambda r: not isinstance(r.id, NewId))
-                    .sudo()
-                    .with_context(prefetch_fields=False)
+            records_write = (
+                self.filtered(lambda r: not isinstance(r.id, NewId))
+                .sudo()
+                .with_context(prefetch_fields=False)
+            )
+
+            if not records_write:
+                return write_full.origin(self, vals, **kwargs)
+
+            with ThrowAwayCache(self.env):
+                old_values = {d["id"]: d for d in records_write.read(fields_list)}
+
+            result = write_full.origin(self, vals, **kwargs)
+
+            self.flush_recordset()
+
+            if self.env.user not in users_to_exclude:
+                with ThrowAwayCache(self.env):
+                    new_values = {d["id"]: d for d in records_write.read(fields_list)}
+
+                rule_model.sudo().create_logs(
+                    self.env.uid,
+                    self._name,
+                    records_write.ids,
+                    "write",
+                    old_values,
+                    new_values,
+                    {"log_type": log_type},
                 )
 
-                if not records_write:
-                    return write_full.origin(self, vals, **kwargs)
-
-                with ThrowAwayCache(self.env):
-                    old_values = {d["id"]: d for d in records_write.read(fields_list)}
-
-                result = write_full.origin(self, vals, **kwargs)
-
-                self.flush_recordset()
-
-                if self.env.user not in users_to_exclude:
-                    with ThrowAwayCache(self.env):
-                        new_values = {
-                            d["id"]: d for d in records_write.read(fields_list)
-                        }
-
-                    rule_model.sudo().create_logs(
-                        self.env.uid,
-                        self._name,
-                        records_write.ids,
-                        "write",
-                        old_values,
-                        new_values,
-                        {"log_type": log_type},
-                    )
-
-                return result
-
-            finally:
-                remove_guard(guard_keys)
+            return result
 
         def write_fast(self, vals, **kwargs):
             self = self.with_context(auditlog_disabled=True)
