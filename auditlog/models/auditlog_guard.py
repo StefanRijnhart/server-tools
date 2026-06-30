@@ -16,5 +16,11 @@ def add_guard(records, keys):
 
 
 def has_conflict(records, keys):
-    guard = records.env.context.get(GUARD_CONTEXT_KEY, ())
-    return bool(set(guard).intersection(keys))
+    """Return whether all the given guard keys are already being processed.
+
+    Keys carry a field dimension (model, ids, field), so a nested write is only
+    considered a recursion when every field it writes is already guarded.
+    Nested writes touching other fields are still logged.
+    """
+    guard = records.env.context.get(GUARD_CONTEXT_KEY, frozenset())
+    return bool(keys) and set(keys) <= set(guard)
