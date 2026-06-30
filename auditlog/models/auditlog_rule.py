@@ -471,24 +471,7 @@ class AuditlogRule(models.Model):
         users_to_exclude = self.mapped("users_to_exclude_ids")
 
         def write_full(self, vals, **kwargs):
-            # Guard the written fields, plus the (same model) stored fields they
-            # depend on. An editable computed field such as ``code`` on
-            # ``account.account`` stores its value through an inverse that writes
-            # back its dependency (``code_store``), which in turn recomputes the
-            # original field: guarding both ends of that cycle is what prevents
-            # the re-entrant logging from recursing indefinitely.
-            guard_fields = set(vals)
-            for fname in vals:
-                field = self._fields.get(fname)
-                if not field:
-                    continue
-                for dependency in self.pool.field_depends[field]:
-                    dependency = dependency.split(".")[0]
-                    if dependency in self._fields:
-                        guard_fields.add(dependency)
-            guard_keys = {
-                (self._name, tuple(self.ids), fname) for fname in guard_fields
-            }
+            guard_keys = {(self._name, tuple(self.ids))}
 
             if has_conflict(self, guard_keys):
                 return write_full.origin(self, vals, **kwargs)

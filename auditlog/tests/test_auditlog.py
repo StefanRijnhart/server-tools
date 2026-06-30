@@ -3,6 +3,8 @@
 # © 2021 Stefan Rijnhart <stefan@opener.amsterdam>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+from unittest.mock import patch
+
 from odoo.fields import Command
 
 from odoo.addons.base.models.ir_model import MODULE_UNINSTALL_FLAG
@@ -444,6 +446,81 @@ class TestFieldRemoval(AuditLogRuleCommon):
         self.assertFalse(self.logs.mapped("model_id"))
         # Assert rule values
         self.assertFalse(self.auditlog_rule.model_id)
+
+
+class TestNestedWrites(AuditLogRuleCommon):
+    """A write that triggers a nested write on the same record must neither
+    recurse nor lose the nested change from the audit trail.
+
+    ``res.partner.write`` is patched so that writing the ``name`` also writes
+    the ``ref`` field, which produces a nested write on the same record while
+    the reentrancy guard is active.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.partner_model_id = cls.env.ref("base.model_res_partner").id
+
+        # Patch res.partner.write so that writing the name also writes the ref.
+        # The patch is installed before any rule is confirmed so that auditlog
+        # wraps it as the origin of its own patched write.
+        partner_cls = type(cls.env["res.partner"])
+        original_write = partner_cls.write
+
+        def write(self, vals):
+            result = original_write(self, vals)
+            if vals.get("name") and "ref" not in vals:
+                self.write({"ref": vals["name"]})
+            return result
+
+        patcher = patch.object(partner_cls, "write", write)
+        patcher.start()
+        cls.addClassCleanup(patcher.stop)
+
+    def _test_nested_write(self, log_type):
+        rule = self.create_rule(
+            {
+                "name": f"testrule for partner nested writes ({log_type})",
+                "model_id": self.partner_model_id,
+                "log_create": True,
+                "log_write": True,
+                "log_type": log_type,
+            }
+        )
+        rule.set_to_confirmed()
+        # Revert the patched ORM methods before the transaction is rolled back,
+        # so the patching does not leak into the next test.
+        self.addCleanup(rule.set_to_draft)
+
+        partner = (
+            self.env["res.partner"]
+            .with_context(tracking_disable=True)
+            .create({"name": "Original"})
+        )
+        partner.write({"name": "Updated"})
+
+        # The nested write synced the ref to the new name without recursing.
+        self.assertEqual(partner.ref, "Updated")
+
+        write_logs = self.env["auditlog.log"].search(
+            [
+                ("model_id", "=", self.partner_model_id),
+                ("method", "=", "write"),
+                ("res_id", "=", partner.id),
+            ]
+        )
+        self.assertTrue(write_logs)
+        # The nested write on the ref field is logged with its new value.
+        ref_lines = write_logs.line_ids.filtered(lambda line: line.field_name == "ref")
+        self.assertTrue(ref_lines, "The nested write on 'ref' was not logged")
+        self.assertEqual(ref_lines.mapped("new_value"), ["Updated"])
+
+    def test_nested_write_full(self):
+        self._test_nested_write("full")
+
+    def test_nested_write_fast(self):
+        self._test_nested_write("fast")
 
 
 class TestAuditlogFullCaptureRecord(AuditLogRuleCommon, AuditlogCommon):
